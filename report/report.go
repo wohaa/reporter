@@ -134,8 +134,16 @@ func (rep *report) renderPNGsParallel(dash grafana.Dashboard) error {
 	panels := make(chan grafana.Panel, len(dash.Panels))
 	for _, p := range dash.Panels {
 		panels <- p
+		log.Printf("panel:  %s", p)
 	}
 	close(panels)
+	log.Printf("try to get rows: %v", len(dash.Rows))
+	rows := make(chan grafana.Row, len(dash.Rows))
+	for _, r := range dash.Rows {
+		//panels <- p
+		log.Printf("row:  %s", r)
+	}
+	close(rows)
 
 	//fetch images in parrallel form Grafana sever.
 	//limit concurrency using a worker pool to avoid overwhelming grafana
@@ -179,6 +187,7 @@ func (rep *report) renderPNG(p grafana.Panel) error {
 		return fmt.Errorf("error creating img directory:%v", err)
 	}
 	imgFileName := fmt.Sprintf("image%d.png", p.Id)
+	log.Printf("renderimg image: %s", p.Title)
 	file, err := os.Create(filepath.Join(rep.imgDirPath(), imgFileName))
 	if err != nil {
 		return fmt.Errorf("error creating image file:%v", err)

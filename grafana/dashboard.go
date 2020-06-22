@@ -47,6 +47,14 @@ type Panel struct {
 	Type    string
 	Title   string
 	GridPos GridPos
+	Section string
+	ScopedVars	map[string]ScopedVar
+}
+
+type ScopedVar struct {
+	Selected	bool
+	Text	string
+	Value	string
 }
 
 // Panel represents a Grafana dashboard panel position
@@ -122,12 +130,38 @@ func populatePanelsFromV4JSON(dash Dashboard, dc dashContainer) Dashboard {
 }
 
 func populatePanelsFromV5JSON(dash Dashboard, dc dashContainer) Dashboard {
+	section := ""
+	section_changed := 0
 	for _, p := range dc.Dashboard.Panels {
+		title := p.Title
 		if p.Type == "row" {
+			for k, v := range p.ScopedVars {
+				if (v.Text != "") {
+					title = strings.ReplaceAll(title, "$"+k, v.Text)
+				} else {
+					title = strings.ReplaceAll(title, "$"+k, v.Value)
+				}
+			}
+			r := Row{Id: p.Id, Title: sanitizeLaTexInput(title)}
+			dash.Rows = append(dash.Rows, r)
+			if section != title {
+				section = title
+				section_changed = 1
+			} else {
+				section_changed = 0
+			}
 			continue
 		}
-		p.Title = sanitizeLaTexInput(p.Title)
+
+		for k := range p.ScopedVars {
+					title = strings.ReplaceAll(title, "$"+k, "")
+		}
+		p.Title = sanitizeLaTexInput(title)
+		if (section_changed == 1) {
+			p.Section = sanitizeLaTexInput(section)
+		}
 		dash.Panels = append(dash.Panels, p)
+		section_changed = 0
 	}
 	return dash
 }

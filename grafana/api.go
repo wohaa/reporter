@@ -45,7 +45,7 @@ type client struct {
 	gridLayout       bool
 }
 
-var getPanelRetrySleepTime = time.Duration(10) * time.Second
+var getPanelRetrySleepTime = time.Duration(30) * time.Second
 
 // NewV4Client creates a new Grafana 4 Client. If apiToken is the empty string,
 // authorization headers will be omitted from requests.
@@ -113,6 +113,7 @@ func (g client) GetDashboard(dashName string) (Dashboard, error) {
 		return Dashboard{}, fmt.Errorf("error obtaining dashboard from %v. Got Status %v, message: %v ", dashURL, resp.Status, string(body))
 	}
 
+
 	return NewDashboard(body, g.variables), nil
 }
 
@@ -168,6 +169,7 @@ func (g client) getPanelURL(p Panel, dashName string, t TimeRange) string {
 	values.Add("panelId", strconv.Itoa(p.Id))
 	values.Add("from", t.From)
 	values.Add("to", t.To)
+	values.Add("timeout", "30")
 
 	if g.gridLayout {
 		width := int(p.GridPos.W * 40)
@@ -176,14 +178,14 @@ func (g client) getPanelURL(p Panel, dashName string, t TimeRange) string {
 		values.Add("height", strconv.Itoa(height))
 	} else {
 		if p.Is(SingleStat) {
-			values.Add("width", "300")
-			values.Add("height", "150")
+			values.Add("width", "600")
+			values.Add("height", "300")
 		} else if p.Is(Text) {
-			values.Add("width", "1000")
-			values.Add("height", "100")
+			values.Add("width", "2000")
+			values.Add("height", "200")
 		} else {
-			values.Add("width", "1000")
-			values.Add("height", "500")
+			values.Add("width", "2000")
+			values.Add("height","1000")
 		}
 	}
 
